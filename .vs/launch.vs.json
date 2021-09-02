@@ -1,0 +1,13 @@
+{
+  "version": "0.2.1",
+  "defaults": {},
+  "configurations": [
+    {
+      "type": "default",
+      "project": "CMakeLists.txt",
+      "currentDir": "${projectDir}",
+      "projectTarget": "minity.exe (C:\\Users\\egilb\\Desktop\\Github\\inf251\\bin\\minity.exe)",
+      "name": "minity.exe (C:\\Users\\egilb\\Desktop\\Github\\inf251\\bin\\minity.exe)"
+    }
+  ]
+}
