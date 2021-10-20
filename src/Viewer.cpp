@@ -15,6 +15,7 @@
 
 #include "CameraInteractor.h"
 #include "BoundingBoxRenderer.h"
+#include "SkyBoxRenderer.h"
 #include "ModelRenderer.h"
 #include "RaytraceRenderer.h"
 #include "Scene.h"
@@ -56,6 +57,7 @@ Viewer::Viewer(GLFWwindow *window, Scene *scene) : m_window(window), m_scene(sce
 	m_renderers.emplace_back(std::make_unique<ModelRenderer>(this));
 	m_renderers.emplace_back(std::make_unique<RaytraceRenderer>(this));
 	m_renderers.emplace_back(std::make_unique<BoundingBoxRenderer>(this));
+	m_renderers.emplace_back(std::make_unique<SkyBoxRenderer>(this));
 
 	int i = 1;
 

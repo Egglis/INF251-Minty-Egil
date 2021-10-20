@@ -1,6 +1,9 @@
 #pragma once
 #include "Renderer.h"
 #include <memory>
+#pragma once
+#include "Renderer.h"
+#include <memory>
 
 #include <glm/glm.hpp>
 #include <glbinding/gl/gl.h>
@@ -24,10 +27,10 @@ namespace minity
 {
 	class Viewer;
 
-	class ModelRenderer : public Renderer
+	class SkyBoxRenderer : public Renderer
 	{
 	public:
-		ModelRenderer(Viewer *viewer);
+		SkyBoxRenderer(Viewer* viewer);
 		virtual void display();
 
 	private:

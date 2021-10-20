@@ -95,6 +95,7 @@ int main(int argc, char *argv[])
 	
 	auto scene = std::make_unique<Scene>();
 	scene->model()->load(fileName);
+	scene->skybox()->load(".\\res\\skybox_tex\\cube.obj");
 	auto viewer = std::make_unique<Viewer>(window, scene.get());
 
 	// Scaling the model's bounding box to the canonical view volume
@@ -103,7 +104,6 @@ int main(int argc, char *argv[])
 	mat4 modelTransform =  scale(vec3(2.0f) / vec3(maximumSize)); 
 	modelTransform = modelTransform * translate(-0.5f*(scene->model()->minimumBounds() + scene->model()->maximumBounds()));
 	viewer->setModelTransform(modelTransform);
-
 
 	glfwSwapInterval(0);
 
