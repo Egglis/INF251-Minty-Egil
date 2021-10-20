@@ -1,12 +1,7 @@
 {
   "ExpandedNodes": [
-    "",
-    "\\res",
-    "\\res\\boundingbox",
-    "\\res\\model",
-    "\\res\\raytrace",
-    "\\res\\ui",
-    "\\src"
+    ""
   ],
+  "SelectedNode": "\\minity.cmd",
   "PreviewInSolutionExplorer": false
 }

@@ -9,7 +9,7 @@ flat in float pointSize;
 out vec4 fragColor;
 
 void main()
-{	
+{
 	float centerDistance = sqrt(4.0)*length(gl_FragCoord.xy-pointCenter)/pointSize;
 	fragColor = vec4(1.0-centerDistance);
 

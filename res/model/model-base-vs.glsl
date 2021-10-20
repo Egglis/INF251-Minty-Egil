@@ -4,7 +4,6 @@
 
 uniform mat4 modelViewProjectionMatrix;
 
-
 in vec3 position;
 in vec3 normal;
 in vec2 texCoord;
@@ -22,8 +21,7 @@ void main()
 
 	vertex.position = position; 
 	vertex.normal = normal;
-	vertex.texCoord = texCoord;
-
+	vertex.texCoord = texCoord;	
 	
 	gl_Position = pos;
 }

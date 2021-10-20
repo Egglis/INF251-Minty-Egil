@@ -151,12 +151,9 @@ void CameraInteractor::mouseButtonEvent(int button, int action, int mods)
 }
 
 void CameraInteractor::cursorPosEvent(double xpos, double ypos)
-{	
-
-
+{
 	m_xCurrent = xpos;
 	m_yCurrent = ypos;
-
 
 	if (m_light)
 	{

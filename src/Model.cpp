@@ -121,10 +121,6 @@ public:
 		std::string map_d;
 		// Bump Map
 		std::string map_bump;
-		// Object-Normal
-		std::string map_normal;
-		// Tangent
-		std::string map_tangent;
 	};
 
 	bool loadObjFile(const std::string & filename)
@@ -666,30 +662,6 @@ public:
 				newMaterial.bumpTexture = std::move(loadTexture(texturePath.string()));
 			}
 
-			if (!m.map_normal.empty()) {
-				std::filesystem::path texturePath = m.map_normal;
-
-				if (!texturePath.is_absolute()) {
-					texturePath = path.parent_path();
-					texturePath.append(m.map_normal);
-				}
-
-
-				newMaterial.normalTexture = std::move(loadTexture(texturePath.string()));
-			}
-
-			if (!m.map_tangent.empty()) {
-				std::filesystem::path texturePath = m.map_tangent;
-
-				if (!texturePath.is_absolute()) {
-					texturePath = path.parent_path();
-					texturePath.append(m.map_tangent);
-				}
-
-
-				newMaterial.tangentTexture = std::move(loadTexture(texturePath.string()));
-			}
-
 			m_materials.push_back(newMaterial);
 
 		}
@@ -842,22 +814,6 @@ public:
 							materials[currentMaterialIndex].map_bump = map_bump;
 						}
 					}
-					// Object Normals
-					else if (token == "map_ObjectNormals") {
-						std::string map_normal;
-						if (getline(iss, map_normal)) {
-							map_normal = trim(map_normal);
-							materials[currentMaterialIndex].map_normal = map_normal;
-						}
-					}
-					else if (token == "map_TangentNormals") {
-						std::string map_tangent;
-						if (getline(iss, map_tangent)) {
-							map_tangent = trim(map_tangent);
-							materials[currentMaterialIndex].map_tangent = map_tangent;
-						}
-					}
-					
 				}
 			}
 		}
@@ -871,6 +827,7 @@ public:
 
 		stbi_set_flip_vertically_on_load(true);
 		unsigned char *data = stbi_load(filename.c_str(), &width, &height, &channels, 0);
+
 		if (data)
 		{
 			std::cout << "Loaded " << filename << std::endl;
@@ -912,8 +869,6 @@ public:
 
 		return std::unique_ptr<Texture>();
 	}
-
-
 
 	const std::vector<Group> & groups() const
 	{
