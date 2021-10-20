@@ -47,6 +47,8 @@ namespace minity
 		std::shared_ptr<globjects::Texture> specularTexture;
 		std::shared_ptr<globjects::Texture> shininessTexture;
 		std::shared_ptr<globjects::Texture> bumpTexture;
+		std::shared_ptr<globjects::Texture> normalTexture;
+		std::shared_ptr<globjects::Texture> tangentTexture;
 	};
 
 	class Model
@@ -66,6 +68,7 @@ namespace minity
 		glm::vec3 maximumBounds() const;
 
 		globjects::VertexArray & vertexArray();
+
 		globjects::Buffer & vertexBuffer();
 		globjects::Buffer & indexBuffer();
 

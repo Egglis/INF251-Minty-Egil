@@ -3,7 +3,7 @@ file(GLOB imgui_sources ${CMAKE_SOURCE_DIR}/lib/imgui/*.cpp ${CMAKE_SOURCE_DIR}/
 file(GLOB tinyfd_sources ${CMAKE_SOURCE_DIR}/lib/tinyfd/tinyfiledialogs.c ${CMAKE_SOURCE_DIR}/lib/tinyfd/tinyfiledialogs.h)
 file(GLOB stb_sources ${CMAKE_SOURCE_DIR}/lib/stb/*.c ${CMAKE_SOURCE_DIR}/lib/stb/*.h)
 
-add_executable(minity ${minity_sources} ${imgui_sources} ${tinyfd_sources} ${stb_sources} )
+add_executable(minity ${minity_sources} ${imgui_sources} ${tinyfd_sources} ${stb_sources}   )
 
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/lib/glm)
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/lib/glbinding)

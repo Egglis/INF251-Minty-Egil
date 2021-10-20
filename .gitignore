@@ -9,6 +9,8 @@ ext
 # Ignore external libraries
 lib
 
+*.vs
+.vs
 
 # Created by https://www.gitignore.io/api/c++,clion
 # Edit at https://www.gitignore.io/?templates=c++,clion
@@ -132,3 +134,14 @@ fabric.properties
 
 # Ignore the whole .idea folder -- added by Juraj
 .idea
+.vs/VSWorkspaceState.json
+.vs/slnx.sqlite
+.vs/ProjectSettings.json
+.vs/inf251/v16/.suo
+.vs/cmake.db
+.vs/VSWorkspaceState.json
+.vs/slnx.sqlite
+.vs/ProjectSettings.json
+.vs/inf251/v16/.suo
+.vs/cmake.db
+.vs/VSWorkspaceState.json
