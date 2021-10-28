@@ -76,7 +76,7 @@ void ModelRenderer::display()
 
 	static std::vector<bool> groupEnabled(groups.size(), true);
 	static bool wireframeEnabled = true;
-	static bool lightSourceEnabled = true;
+	static bool lightSourceEnabled = false;
 	static vec4 wireframeLineColor = vec4(1.0f);
 
 	// Shading Settings
@@ -92,19 +92,11 @@ void ModelRenderer::display()
 	static float specularIntensity = 1.0f;
 	static float diffuseIntensity = 1.0f;
 
-
 	// Light Controls
 	static bool manLightPos = false;
 	static float lightX = 0.0f;
 	static float lightY = 0.0f;
 	static float lightZ = 0.0f;
-
-	// Three-Point lighting
-	static bool threePointLighting = false;
-	static vec3 backLightColor = vec3(1, 1, 1);
-	static vec3 keyLightColor = vec3(1, 1, 1);
-	static float keyLightRot = 0.0f;
-	static float angle_cutoff = 5.0f;
 
 	// Textures:
 	static bool diffuseTexture = false;
@@ -113,16 +105,31 @@ void ModelRenderer::display()
 	static bool normalTexture = false;
 	static bool tangentTexture = false;
 
+	// Procedual Bump mapping
 	static bool procedualBumpMap = false;
 	static float A = 0.001;
 	static float k = 100;
+
+	// Reflections/Refractions
+	static bool reflectionBool = false;
+	static bool refractionBool = false;
+	static float n1 = 1.0f;
+	static float n2 = 1.33f;
+	static float ratio = n1 / n2;
+	static const char* items[]{"Air - 1.000","Water - 1.333","Ice - 1.309","Glass - 1.523","Diamond - 2.422"};
+	static const float values[]{1.00f, 1.33f, 1.309f, 1.52f, 2.42f};
+	static int selectedItem1 = 0;
+	static int selectedItem2 = 0;
+	static bool onlyReflection = false;
+	static bool ambientReflection = false;
+
+
+	unsigned int skyboxTexture = viewer()->scene()->skyboxTexture;
 
 	if (ImGui::BeginMenu("Model"))
 	{
 		ImGui::Checkbox("Wireframe Enabled", &wireframeEnabled);
 		ImGui::Checkbox("Light Source Enabled", &lightSourceEnabled);
-		ImGui::Checkbox("Three Point Lighting", &threePointLighting);
-
 		if (wireframeEnabled)
 		{
 			if (ImGui::CollapsingHeader("Wireframe"))
@@ -137,10 +144,30 @@ void ModelRenderer::display()
 			ImGui::Checkbox("Normal Texture", &normalTexture);
 			ImGui::Checkbox("Tangent Texture", &tangentTexture);
 			ImGui::Checkbox("Procedual Bump Mapping", &procedualBumpMap);
-			ImGui::InputFloat("Amplitude: A", &A);
-			ImGui::InputFloat("Frequnecy: k", &k);
+			ImGui::SliderFloat("Amplitude: A", &A,0,100);
+			ImGui::SliderFloat("Frequnecy: k", &k,0,100);
+		}
+
+		if (ImGui::CollapsingHeader("Reflections and Refractions")) {
+			ImGui::Checkbox("Reflections", &reflectionBool);
+			if (reflectionBool) { refractionBool = false; }
+			ImGui::Checkbox("Refractions", &refractionBool);
+			if (refractionBool) { 
+				reflectionBool = false;  
+				ImGui::ListBox("From", &selectedItem1, items, IM_ARRAYSIZE(items), 5);
+				ImGui::ListBox("To", &selectedItem2, items, IM_ARRAYSIZE(items), 5);
+				n1 = values[selectedItem1];
+				n2 = values[selectedItem2];
+				ImGui::SliderFloat("Manual: n1", &n1, 0.1f, 10.0f);
+				ImGui::SliderFloat("Manual: n2", &n2, 0.1f, 10.0f);
+				ratio = n1 / n2;
+			}
 
 
+			ImGui::Checkbox("Only reflections/Refraction", &onlyReflection);
+			if (onlyReflection) {ambientReflection = false;}
+			ImGui::Checkbox("Ambient reflections/Refraction", &ambientReflection);
+			if (ambientReflection) { onlyReflection = false;}
 		}
 
 		if (ImGui::CollapsingHeader("Lighting")) {
@@ -164,23 +191,14 @@ void ModelRenderer::display()
 			}
 			
 		}
-		if (!threePointLighting) {
+		
 			if (ImGui::CollapsingHeader("Light Position")) {
 				ImGui::Checkbox("Manual Light Control", &manLightPos);
 				ImGui::SliderFloat("x", &lightX, -15.0f, 15.0f);
 				ImGui::SliderFloat("y", &lightY, -15.0f, 15.0f);
 				ImGui::SliderFloat("z", &lightZ, -15.0f, 15.0f);
 			}
-		}
-		else {
-			if (ImGui::CollapsingHeader("3-point Settings")) {
-				ImGui::ColorEdit4("Key Light Color", (float*)&keyLightColor, ImGuiColorEditFlags_AlphaBar);
-				ImGui::SliderFloat("angle_cutoff", &angle_cutoff, 0.0f, 180.0);
-				ImGui::ColorEdit4("Back Light Color", (float*)&backLightColor, ImGuiColorEditFlags_AlphaBar);
-
-			}
-		}
-
+		
 
 		if (ImGui::CollapsingHeader("Groups"))
 		{
@@ -206,40 +224,25 @@ void ModelRenderer::display()
 	shaderProgramModelBase->setUniform("modelLightMatrix", modelLightMatrix);
 	shaderProgramModelBase->setUniform("normalMatrix", normalMatrix);
 	shaderProgramModelBase->setUniform("procedualBumpMap", procedualBumpMap);
-
 	shaderProgramModelBase->setUniform("viewportSize", viewportSize);
 	shaderProgramModelBase->setUniform("worldCameraPosition", vec3(worldCameraPosition));
-
+	shaderProgramModelBase->setUniform("wireframeEnabled", wireframeEnabled);
+	shaderProgramModelBase->setUniform("wireframeLineColor", wireframeLineColor);
+	shaderProgramModelBase->setUniform("blinnPhong", blinnPhong);
+	shaderProgramModelBase->setUniform("toonShading", toonShading);
+	shaderProgramModelBase->setUniform("A", A);
+	shaderProgramModelBase->setUniform("k", k);
+	shaderProgramModelBase->setUniform("reflectionBool", reflectionBool);
+	shaderProgramModelBase->setUniform("onlyReflection", onlyReflection);
+	shaderProgramModelBase->setUniform("ambientReflection", ambientReflection);
+	shaderProgramModelBase->setUniform("refractionBool", refractionBool);
+	shaderProgramModelBase->setUniform("refractionRatio", ratio);
 	if (manLightPos) {
-		shaderProgramModelBase->setUniform("worldLightPosition", vec3(worldLightPosition)+vec3(lightX, lightY, lightZ));
+		shaderProgramModelBase->setUniform("worldLightPosition", vec3(worldLightPosition) + vec3(lightX, lightY, lightZ));
 	}
 	else {
 		shaderProgramModelBase->setUniform("worldLightPosition", vec3(worldLightPosition));
 	}
-
-
-	shaderProgramModelBase->setUniform("wireframeEnabled", wireframeEnabled);
-	shaderProgramModelBase->setUniform("wireframeLineColor", wireframeLineColor);
-
-	// Shading Settings
-	shaderProgramModelBase->setUniform("blinnPhong", blinnPhong);
-	shaderProgramModelBase->setUniform("toonShading", toonShading);
-
-
-	// 3 Point lighting varibels 
-	shaderProgramModelBase->setUniform("threePointLighting", threePointLighting);
-	shaderProgramModelBase->setUniform("fillLight", vec3(worldCameraPosition));  // Light is always within the camera and pointing at the object
-	shaderProgramModelBase->setUniform("backLight", -vec3(worldCameraPosition));
-	shaderProgramModelBase->setUniform("keyLight", vec3(worldLightPosition)); // Position is defines as the normal light soruce 
-	shaderProgramModelBase->setUniform("keyLightDir", vec3(0, 0, 0) - vec3(worldLightPosition)); // Always pointing towards the center, Not ideal!
-	shaderProgramModelBase->setUniform("backLightColor", backLightColor);
-	shaderProgramModelBase->setUniform("keyLightColor", keyLightColor);
-	shaderProgramModelBase->setUniform("angleC", glm::cos(glm::radians(angle_cutoff)));
-
-
-	shaderProgramModelBase->setUniform("A", A);
-	shaderProgramModelBase->setUniform("k", k);
-
 	
 
 	
@@ -280,11 +283,14 @@ void ModelRenderer::display()
 			shaderProgramModelBase->setUniform("tangentTexBool", tangentTexture);
 
 
+
+			glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
+
 			if (material.diffuseTexture && diffuseTexture)
 			{
 				//diffuseTexture = true;
-				shaderProgramModelBase->setUniform("diffuseTexture", 0);
-				material.diffuseTexture->bindActive(0);
+				shaderProgramModelBase->setUniform("diffuseTexture", 6);
+				material.diffuseTexture->bindActive(6);
 			}
 			if (material.ambientTexture && ambientTexture)
 			{
@@ -374,3 +380,5 @@ void ModelRenderer::display()
 	// currentState->apply();
 
 }
+
+

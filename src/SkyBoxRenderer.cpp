@@ -15,6 +15,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 
+#include <stb_image.h>
 
 
 using namespace minity;
@@ -35,7 +36,7 @@ SkyBoxRenderer::SkyBoxRenderer(Viewer* viewer) : Renderer(viewer)
 		{ GL_VERTEX_SHADER,"./res/skybox/skybox-vs.glsl" },
 		{ GL_GEOMETRY_SHADER,"./res/skybox/skybox-gs.glsl" },
 		{ GL_FRAGMENT_SHADER,"./res/skybox/skybox-fs.glsl" }, });
-
+	
 }
 
 
@@ -74,7 +75,7 @@ void SkyBoxRenderer::display()
 	static vec4 wireframeLineColor = vec4(1.0f);
 	static float scaleSkybox = 10.0f;
 
-
+	unsigned int skyboxTexture = viewer()->scene()->skyboxTexture;
 
 
 	if (ImGui::BeginMenu("SkyBox"))
@@ -109,7 +110,7 @@ void SkyBoxRenderer::display()
 
 
 	shaderProgramModelBase->setUniform("modelViewProjectionMatrix", modelViewProjectionMatrix);
-	shaderProgramModelBase->setUniform("modelViewMatrix", modelViewMatrix);
+	shaderProgramModelBase->setUniform("modelViewMatrix", modelViewMatrix*0.001f);
 	shaderProgramModelBase->setUniform("viewMatrix", viewMatrix);
 	shaderProgramModelBase->setUniform("modelLightMatrix", modelLightMatrix);
 	shaderProgramModelBase->setUniform("normalMatrix", normalMatrix);
@@ -120,8 +121,6 @@ void SkyBoxRenderer::display()
 
 	shaderProgramModelBase->setUniform("worldLightPosition", vec3(worldLightPosition));
 	
-
-
 	shaderProgramModelBase->setUniform("wireframeEnabled", wireframeEnabled);
 	shaderProgramModelBase->setUniform("wireframeLineColor", wireframeLineColor);
 
@@ -136,19 +135,9 @@ void SkyBoxRenderer::display()
 			const Material& material = materials.at(groups.at(i).materialIndex);
 
 
-			if (material.ambientTexture){
-				shaderProgramModelBase->setUniform("ambientTexture", 0);
-				material.ambientTexture->bindActive(0);
-				//globjects::debug() << "OpenGL Version:  " << "loading ambient texture";
-			}
+			glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
 
-
-			
 			viewer()->scene()->skybox()->vertexArray().drawElements(GL_TRIANGLES, groups.at(i).count(), GL_UNSIGNED_INT, (void*)(sizeof(GLuint) * groups.at(i).startIndex));
-			
-			if (material.ambientTexture) {
-				material.ambientTexture->unbind();
-			}
 			
 
 		}
@@ -158,11 +147,7 @@ void SkyBoxRenderer::display()
 	shaderProgramModelBase->release();
 
 	viewer()->scene()->skybox()->vertexArray().unbind();
-	//cube.vertexArray().unbind();
 
-	// Restore OpenGL state (disabled to to issues with some Intel drivers)
-	// currentState->apply();
 
 }
-
 

@@ -6,7 +6,8 @@ uniform vec3 worldLightPosition;
 uniform bool wireframeEnabled;
 uniform vec4 wireframeLineColor;
 uniform mat3 normalMatrix;
-uniform sampler2D ambientTexture;
+
+uniform samplerCube skybox;
 
 
 in fragmentData
@@ -33,9 +34,8 @@ void main()
 		fragColor = result;
 	}
 
-	result.rgba = texture(ambientTexture,fragment.texCoord).rgba*2 -1;
+	result.rgba = texture(skybox, fragment.position).rgba;
 
-	
 
 	fragColor = result;
 }

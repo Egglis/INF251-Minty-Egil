@@ -27,6 +27,9 @@
 #include "Interactor.h"
 #include "Renderer.h"
 
+#include <stb_image.h>
+
+
 using namespace gl;
 using namespace glm;
 using namespace globjects;
@@ -35,6 +38,40 @@ using namespace minity;
 void error_callback(int errnum, const char * errmsg)
 {
 	globjects::critical() << errnum << ": " << errmsg << std::endl;
+}
+
+
+unsigned int loadCubemap(std::vector<std::string> faces)
+{
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+	stbi_set_flip_vertically_on_load(false);
+	int width, height, nrChannels;
+	for (unsigned int i = 0; i < faces.size(); i++)
+	{
+		unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+		if (data)
+		{
+			std::cout << "Loading: " << faces[i] << std::endl;
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+				0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+			);
+			stbi_image_free(data);
+		}
+		else
+		{
+			std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
+			stbi_image_free(data);
+		}
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	return textureID;
 }
 
 int main(int argc, char *argv[])
@@ -92,10 +129,20 @@ int main(int argc, char *argv[])
 		if (openfileName)
 			fileName = std::string(openfileName);
 	}
-	
+
+	std::vector<std::string> faces = {
+		".\\res\\skyboxtex\\right.jpg",
+		".\\res\\skyboxtex\\left.jpg",
+		".\\res\\skyboxtex\\top.jpg",
+		".\\res\\skyboxtex\\bottom.jpg",
+		".\\res\\skyboxtex\\front.jpg",
+		".\\res\\skyboxtex\\back.jpg",
+	};
+
 	auto scene = std::make_unique<Scene>();
 	scene->model()->load(fileName);
-	scene->skybox()->load(".\\res\\skybox_tex\\cube.obj");
+	scene->skybox()->load(".\\res\\skyboxtex\\cube.obj");
+	scene->skyboxTexture = loadCubemap(faces);
 	auto viewer = std::make_unique<Viewer>(window, scene.get());
 
 	// Scaling the model's bounding box to the canonical view volume
@@ -124,3 +171,5 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
+
+

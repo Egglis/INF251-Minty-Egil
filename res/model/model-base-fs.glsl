@@ -38,22 +38,17 @@ uniform vec4 ambientColor;
 uniform vec4 specularColor;
 uniform vec4 diffuseColor;
 uniform float specularExponent;
-
 uniform float diffuseIntensity;
 uniform float ambientIntensity;
 uniform float specularIntensity;
 
-
-// 3-points
-uniform bool threePointLighting;
-uniform vec3 backLight;
-uniform vec3 backLightColor;
-uniform vec3 fillLight;
-uniform vec3 keyLight;
-uniform vec3 keyLightDir;
-uniform vec3 keyLightColor;
-uniform float angleC;
-
+// Skybox and reflections/refractions
+uniform samplerCube skybox;
+uniform bool reflectionBool;
+uniform bool onlyReflection;
+uniform bool ambientReflection;
+uniform bool refractionBool;
+uniform float refractionRatio;
 
 in fragmentData
 {
@@ -65,13 +60,6 @@ in fragmentData
 } fragment;
 
 out vec4 fragColor;
-
-
-// Calculates if the given vertex is within the cone of light
-bool coneLightAngle(vec3 lightDirection, vec3 spotLightDirection){
-	vec3 spotDir = normalize(spotLightDirection);
-	return dot(spotDir, -lightDirection) > angleC;	
-}
 
 // Calculates the new intesities based on a fixed gradient
 float toonIntensityCalc(float intensity){
@@ -92,6 +80,18 @@ float toonIntensityCalc(float intensity){
 
 vec4 calculateModel(vec3 lightDirection, vec3 viewDirection, vec3 normal){
 	vec4 result = vec4(0.5,0.5,0.5,1.0);
+
+	// Skybox reflections/refractions
+	vec4 reflectionColor = vec4(1.0f);
+	vec3 I = normalize(fragment.position - worldCameraPosition);
+	vec3 R = vec3(1.0f);
+	if(reflectionBool) {
+		R = reflect(I, normalize(normal));
+	} else if (refractionBool) {
+		R = refract(I, normalize(normal),refractionRatio);
+	}
+	reflectionColor = vec4(texture(skybox, R).rgb, 1.0);
+
 	// Ambient
 	vec4 ambient = ambientColor * ambientIntensity;
 
@@ -132,6 +132,10 @@ vec4 calculateModel(vec3 lightDirection, vec3 viewDirection, vec3 normal){
 	if(ambientTexBool)	ambientTextureColor = texture(ambientTexture, fragment.texCoord);
 	if(specularTexBool) specularTextureColor = texture(specularTexture, fragment.texCoord);
 
+	if(ambientReflection) {
+		result = diffuse*diffuseTextureColor + specular*specularTextureColor + reflectionColor;
+		return result;
+	}
 	result = diffuse*diffuseTextureColor + specular*specularTextureColor + ambient*ambientTextureColor;
 	return result;
 }
@@ -146,12 +150,13 @@ float bv(float u, float v) {
 	return A*k*pow(sin(k*u),2)*sin(2*k*v);
 }
 
+
 // Calcultes the new normal after procedual bump mapping
 vec3 doProcedualBumpMapping(vec3 normal, vec3 tangent, vec3 bitangent){
 	vec3 newNormal;
-	vec2 pos = vec2(normal.x, normal.y);
+	vec2 pos = vec2(fragment.texCoord.x, fragment.texCoord.y);
 
-	newNormal = normal + bu(pos.x, pos.y) * cross(normal, tangent) - bv(pos.x,pos.y) * cross(normal, bitangent) + bu(pos.x,pos.y) * bv(pos.x,pos.y) * cross(normal, normal);
+	newNormal = normal + bu(pos.x, pos.y) * cross(tangent, normal) + bv(pos.x,pos.y) * cross(normal, bitangent);
 	return newNormal;
 }
 
@@ -167,13 +172,12 @@ void main()
 		float edgeIntensity = exp2(-1.0*smallestDistance*smallestDistance);
 		result.rgb = mix(result.rgb,wireframeLineColor.rgb,edgeIntensity*wireframeLineColor.a);
 		fragColor = result;
-
 	}
 
 	vec3 normal = normalize(fragment.normal);
 	vec3 lightDirection = normalize(worldLightPosition - fragment.position);
 	vec3 viewDirection = normalize(worldCameraPosition - fragment.position);
-	
+
 	vec3 tangent = normalize(fragment.tangent);
 	vec3 bitangent = cross(tangent, fragment.normal);
 
@@ -200,10 +204,22 @@ void main()
 		normal = newNormal;
 	}
 
-	
-	result.rgba = calculateModel(lightDirection, viewDirection, normal);
-	
+	// Only Reflections/Refraction
+	if(onlyReflection){
+		vec3 I = normalize(fragment.position - worldCameraPosition);
+		vec3 R = vec3(1.0f);
+		if(reflectionBool) {
+			R = reflect(I, normalize(normal));
+		} else if (refractionBool) {
+			R = refract(I, normalize(normal),refractionRatio);
+		}
+		vec4 reflectionColor = vec4(texture(skybox, R).rgb, 1.0);
+		result = reflectionColor;
+		fragColor = result;
+		return;
+	}
 
+	result.rgba = calculateModel(lightDirection, viewDirection, normal);
 	fragColor = result;
 }
 
