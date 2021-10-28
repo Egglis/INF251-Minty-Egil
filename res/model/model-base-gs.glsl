@@ -60,7 +60,6 @@ void main(void)
 	v[1] = p[2]-p[0];
 	v[2] = p[1]-p[0];
 
-	// TODO make simpler!
 	vec3 v0 = vertices[0].position;
 	vec3 v1 = vertices[1].position;
 	vec3 v2 = vertices[2].position;
@@ -71,11 +70,7 @@ void main(void)
 
 	tangent1 = calculateTangent(v1 - v0, v2 - v0, st1 - st0, st2 - st0);
 
-	float area = abs(v[1].x*v[2].y - v[1].y * v[2].x);
-	vec3 tangents[3];
-	tangents[0] = tangent1;
-	tangents[1] = tangent1;
-	tangents[2] = tangent1;
+	float area = abs(v[1].x*v[2].y - v[1].y * v[2].x);	
 
 
 	for (int i=0;i<3;i++)
@@ -84,7 +79,7 @@ void main(void)
 		fragment.position = vertices[i].position;
 		fragment.normal = vertices[i].normal;
 		fragment.texCoord = vertices[i].texCoord;
-		fragment.tangent = tangents[i];
+		fragment.tangent = tangent1;
 		vec3 ed = vec3(0.0);
 		ed[i] = area / length(v[i]);
 		fragment.edgeDistance = ed;

@@ -25,5 +25,5 @@ void main()
 	vertex.texCoord = texCoord;
 
 	
-	gl_Position = pos;
+	gl_Position = pos*2;
 }

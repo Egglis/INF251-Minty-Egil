@@ -1011,6 +1011,9 @@ void Model::load(const std::string& filename)
 	}
 }
 
+
+
+
 const std::string & Model::filename() const
 {
 	return m_filename;
@@ -1060,4 +1063,6 @@ Buffer & Model::indexBuffer()
 {
 	return *m_indexBuffer.get();
 }
+
+
 

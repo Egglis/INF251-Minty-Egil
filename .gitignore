@@ -11,6 +11,7 @@ lib
 
 *.vs
 .vs
+*.vs\*
 
 # Created by https://www.gitignore.io/api/c++,clion
 # Edit at https://www.gitignore.io/?templates=c++,clion
@@ -145,3 +146,6 @@ fabric.properties
 .vs/inf251/v16/.suo
 .vs/cmake.db
 .vs/VSWorkspaceState.json
+.vs/slnx.sqlite
+.vs/inf251/v16/.suo
+.vs/cmake.db
