@@ -99,9 +99,9 @@ void ModelRenderer::display()
 	static float lightZ = 0.0f;
 
 	// Textures:
-	static bool diffuseTexture = false;
-	static bool ambientTexture = false;
-	static bool specularTexture = false;
+	static bool diffuseTexture = true;
+	static bool ambientTexture = true;
+	static bool specularTexture = true;
 	static bool normalTexture = false;
 	static bool tangentTexture = false;
 
@@ -123,6 +123,9 @@ void ModelRenderer::display()
 	static bool onlyReflection = false;
 	static bool ambientReflection = false;
 
+	// Animation
+	static float explotion = 0.0f;
+	static float timeStep = 0.0f;
 
 	unsigned int skyboxTexture = viewer()->scene()->skyboxTexture;
 
@@ -210,7 +213,12 @@ void ModelRenderer::display()
 			}
 
 		}
+		ImGui::EndMenu();
+	}
 
+	if (ImGui::BeginMenu("Animations")) {
+		ImGui::SliderFloat("Explosion: ", &explotion, -1, 5);
+		ImGui::SliderFloat("Timeline", &timeStep, 0.0f, 1.0f);
 		ImGui::EndMenu();
 	}
 
@@ -244,8 +252,8 @@ void ModelRenderer::display()
 		shaderProgramModelBase->setUniform("worldLightPosition", vec3(worldLightPosition));
 	}
 	
+	vec3 centerModel = (viewer()->scene()->model()->maximumBounds() + viewer()->scene()->model()->minimumBounds()) * 0.5f;
 
-	
 	shaderProgramModelBase->use();
 
 	for (uint i = 0; i < groups.size(); i++)
@@ -282,6 +290,14 @@ void ModelRenderer::display()
 			shaderProgramModelBase->setUniform("normalTexBool", normalTexture);
 			shaderProgramModelBase->setUniform("tangentTexBool", tangentTexture);
 
+			
+			// Get Direction from center of mass, and "push" 
+
+
+			mat4 trans = translate(mat4(1.0f), (groups.at(i).centerMass-centerModel)*vec3(explotion));
+
+			shaderProgramModelBase->setUniform("explotion", explotion);
+			shaderProgramModelBase->setUniform("transformation", trans);
 
 
 			glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);

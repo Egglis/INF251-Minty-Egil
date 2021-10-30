@@ -114,7 +114,6 @@ void SkyBoxRenderer::display()
 	shaderProgramModelBase->setUniform("viewMatrix", viewMatrix);
 	shaderProgramModelBase->setUniform("modelLightMatrix", modelLightMatrix);
 	shaderProgramModelBase->setUniform("normalMatrix", normalMatrix);
-	shaderProgramModelBase->setUniform("scaleSkybox", scaleSkybox);
 
 	shaderProgramModelBase->setUniform("viewportSize", viewportSize);
 	shaderProgramModelBase->setUniform("worldCameraPosition", vec3(worldCameraPosition));
@@ -134,6 +133,8 @@ void SkyBoxRenderer::display()
 		{
 			const Material& material = materials.at(groups.at(i).materialIndex);
 
+			mat4 scaleMat = scale(mat4(1.0f), vec3(scaleSkybox));
+			shaderProgramModelBase->setUniform("scale", scaleMat);
 
 			glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
 

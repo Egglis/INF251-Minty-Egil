@@ -86,5 +86,5 @@ namespace minity
 	 * @param rotation Out parameter for rotation
 	 * @param scale Out parameter for scale
 	 */
-	void matrixDecompose(const glm::mat4& matrix, glm::vec3& translation, glm::mat4& rotation, glm::vec3& scale);
+	void matrixDecompose(const glm::mat4& matrix, glm::vec3& translation, glm::mat4& rotation, glm::vec3& scale, bool preMultipliedRotation);
 }

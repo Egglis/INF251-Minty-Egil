@@ -3,11 +3,13 @@
 #include "/model-globals.glsl"
 
 uniform mat4 modelViewProjectionMatrix;
-
+uniform mat4 transformation;
+uniform float explotion;
 
 in vec3 position;
 in vec3 normal;
 in vec2 texCoord;
+
 
 out vertexData
 {
@@ -18,12 +20,12 @@ out vertexData
 
 void main()
 {
-	vec4 pos = modelViewProjectionMatrix*vec4(position,1.0);
+	vec4 pos = modelViewProjectionMatrix*transformation*vec4(position,1.0);
 
 	vertex.position = position; 
 	vertex.normal = normal;
 	vertex.texCoord = texCoord;
 
 	
-	gl_Position = pos*2;
+	gl_Position = pos;
 }
