@@ -270,7 +270,7 @@ public:
 							{
 								ObjGroup newGroup;
 								newGroup.name = groupName;
-
+								
 								groupList.push_back(newGroup);
 								groupIterator = groupList.end();
 								groupIterator--;
@@ -541,6 +541,7 @@ public:
 
 		m_vertices.resize(positions.size());
 
+
 		for (std::list<ObjGroup>::iterator i = groupList.begin(); i != groupList.end(); i++)
 		{
 			if (i->positionIndices.size() > 0)
@@ -549,13 +550,17 @@ public:
 				newGroup.name = i->name;
 				newGroup.startIndex = uint(m_indices.size());
 
+				vec3 groupMinBounds = vec3(std::numeric_limits<float>::max());
+				vec3 groupMaxBounds = vec3(-std::numeric_limits<float>::max());
+
 				std::unordered_map<std::string, int>::iterator j = materialMap.find(i->material);
+
 
 				if (j != materialMap.end())
 					newGroup.materialIndex = j->second;
 				else
 					newGroup.materialIndex = 0;
-
+					
 				for (uint j = 0; j < i->positionIndices.size(); j++)
 				{
 					const uint index = i->positionIndices[j];
@@ -564,6 +569,9 @@ public:
 					vertex.position = positions[index];
 					vertex.normal = normals[i->normalIndices[j]];
 					vertex.texcoord = texCoords[i->texCoordIndices[j]];
+
+					groupMinBounds = min(groupMinBounds, vertex.position);
+					groupMaxBounds = max(groupMaxBounds, vertex.position);					
 
 					if (m_vertices[index].position == vertex.position)
 					{
@@ -585,10 +593,17 @@ public:
 					}
 				}
 
+				
+				newGroup.maxBounds = groupMaxBounds;
+				newGroup.minBounds = groupMinBounds;
+				newGroup.centerMass = (groupMaxBounds + groupMinBounds) * 0.5f;
 				newGroup.endIndex = uint(m_indices.size());
 				m_groups.push_back(newGroup);
 			}
+		
 		}
+
+
 
 		m_materials.reserve(materials.size());
 		

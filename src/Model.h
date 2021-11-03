@@ -26,6 +26,9 @@ namespace minity
 		glm::uint materialIndex = 0;
 		glm::uint startIndex = 0;
 		glm::uint endIndex = 0;
+		glm::vec3 maxBounds = glm::vec3(0,0,0);
+		glm::vec3 minBounds = glm::vec3(0,0,0);
+		glm::vec3 centerMass = glm::vec3(0,0,0);
 		
 		glm::uint count() const
 		{

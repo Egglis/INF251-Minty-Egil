@@ -40,6 +40,7 @@ ModelRenderer::ModelRenderer(Viewer* viewer) : Renderer(viewer)
 		{ GL_VERTEX_SHADER,"./res/model/model-light-vs.glsl" },
 		{ GL_FRAGMENT_SHADER,"./res/model/model-light-fs.glsl" },
 		}, { "./res/model/model-globals.glsl" });
+
 }
 
 bool setup = true;
@@ -75,8 +76,8 @@ void ModelRenderer::display()
 	const std::vector<Material>& materials = viewer()->scene()->model()->materials();
 
 	static std::vector<bool> groupEnabled(groups.size(), true);
-	static bool wireframeEnabled = true;
-	static bool lightSourceEnabled = false;
+	static bool wireframeEnabled = false;
+	static bool lightSourceEnabled = true;
 	static vec4 wireframeLineColor = vec4(1.0f);
 
 	// Shading Settings
@@ -99,9 +100,9 @@ void ModelRenderer::display()
 	static float lightZ = 0.0f;
 
 	// Textures:
-	static bool diffuseTexture = false;
-	static bool ambientTexture = false;
-	static bool specularTexture = false;
+	static bool diffuseTexture = true;
+	static bool ambientTexture = true;
+	static bool specularTexture = true;
 	static bool normalTexture = false;
 	static bool tangentTexture = false;
 
@@ -123,20 +124,26 @@ void ModelRenderer::display()
 	static bool onlyReflection = false;
 	static bool ambientReflection = false;
 
+	// Animation
+	static float explosion = 0.0f;
+	static float timeStep = 0.0f;
+	static float dt = 0.1;
+	static bool cameraExplosion = false;
 
 	unsigned int skyboxTexture = viewer()->scene()->skyboxTexture;
 
-	if (ImGui::BeginMenu("Model"))
-	{
+	if (ImGui::BeginMenu("Model")) {
 		ImGui::Checkbox("Wireframe Enabled", &wireframeEnabled);
 		ImGui::Checkbox("Light Source Enabled", &lightSourceEnabled);
-		if (wireframeEnabled)
-		{
-			if (ImGui::CollapsingHeader("Wireframe"))
-			{
+
+
+		if (wireframeEnabled) {
+			if (ImGui::CollapsingHeader("Wireframe")) {
 				ImGui::ColorEdit4("Line Color", (float*)&wireframeLineColor, ImGuiColorEditFlags_AlphaBar);
 			}
 		}
+
+
 		if (ImGui::CollapsingHeader("Textures")) {
 			ImGui::Checkbox("Diffuse Texture", &diffuseTexture);
 			ImGui::Checkbox("Ambient Texture", &ambientTexture);
@@ -144,7 +151,7 @@ void ModelRenderer::display()
 			ImGui::Checkbox("Normal Texture", &normalTexture);
 			ImGui::Checkbox("Tangent Texture", &tangentTexture);
 			ImGui::Checkbox("Procedual Bump Mapping", &procedualBumpMap);
-			ImGui::SliderFloat("Amplitude: A", &A,0,100);
+			ImGui::SliderFloat("Amplitude: A", &A,0,6);
 			ImGui::SliderFloat("Frequnecy: k", &k,0,100);
 		}
 
@@ -200,22 +207,78 @@ void ModelRenderer::display()
 			}
 		
 
-		if (ImGui::CollapsingHeader("Groups"))
-		{
-			for (uint i = 0; i < groups.size(); i++)
-			{
+		if (ImGui::CollapsingHeader("Groups")) {
+			for (uint i = 0; i < groups.size(); i++) {
 				bool checked = groupEnabled.at(i);
 				ImGui::Checkbox(groups.at(i).name.c_str(), &checked);
 				groupEnabled[i] = checked;
 			}
+		}
+		ImGui::EndMenu();
+	}
 
+	if(ImGui::BeginMenu("Animations")) {
+		ImGui::SliderFloat("Explosion:", &explosion, -1.0f, 5.0f);
+		ImGui::Checkbox("Camera explosion", &cameraExplosion);
+		ImGui::SliderFloat("Timeline", &timeStep, 0.0f, viewer()->getKeyFrames().size()-3);
+		ImGui::SliderFloat("Animation speed: dt", &dt, 0.0000f, 1.0f);
+		if(viewer()->isAnimationOn()){
+			ImGui::Text("Animation is playing: Press P to stop");
+			ImGui::Text("Set animation speed to 0 for manual timeline control!");
 		}
 
 		ImGui::EndMenu();
 	}
 
+
 	vec4 worldCameraPosition = inverseModelViewMatrix * vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	vec4 worldLightPosition = inverseModelLightMatrix * vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+	viewer()->m_explosion = vec3(explosion);
+
+	// Get the keyFrames from the viewer
+	std::vector<KeyFrame> keyFrames = viewer()->getKeyFrames();
+	if (keyFrames.size() >= 6 && viewer()->isAnimationOn()) {
+
+		// Loop the animation
+		if(timeStep+dt >= (keyFrames.size()-3)){
+			timeStep = 0.0f;
+		}
+		timeStep += dt;
+
+		// Get current index
+		int i = floorf(timeStep);
+		if (i != keyFrames.size() - 3) {
+			// Background
+			viewer()->setBackgroundColor(catmullRom(timeStep - i, keyFrames[i].backgroundColor, keyFrames[i + 1].backgroundColor, keyFrames[i + 2].backgroundColor, keyFrames[i + 3].backgroundColor));
+
+			// explosion
+			explosion = catmullRom(timeStep - i, keyFrames[i].explosion, keyFrames[i + 1].explosion, keyFrames[i + 2].explosion, keyFrames[i + 3].explosion).x;
+			
+			// ViewMatrix interoplation
+			mat4 view_scale = glm::scale(mat4(1.0f), catmullRom(timeStep - i, keyFrames[i].c_scale, keyFrames[i + 1].c_scale, keyFrames[i + 2].c_scale, keyFrames[i + 3].c_scale));
+			mat4 view_translation = glm::translate(mat4(1.0f), catmullRom(timeStep - i, keyFrames[i].c_translate, keyFrames[i + 1].c_translate, keyFrames[i + 2].c_translate, keyFrames[i + 3].c_translate));
+
+			// Old and new method (SLERP)
+			// mat4 view_rotation = glm::mat4_cast(catmullRom(timeStep - i, glm::quat_cast(keyFrames[i].c_rotate), glm::quat_cast(keyFrames[i + 1].c_rotate), glm::quat_cast(keyFrames[i + 2].c_rotate), glm::quat_cast(keyFrames[i + 3].c_rotate)));
+			mat4 view_rotation = glm::mat4_cast(glm::slerp(glm::quat_cast(keyFrames[i + 1].c_rotate), glm::quat_cast(keyFrames[i + 2].c_rotate), timeStep - i));
+
+			mat4 newViewMatrix = view_scale * view_rotation * view_translation;
+			viewer()->setViewTransform(newViewMatrix);
+
+			// LightMatrix interoplation
+			mat4 light_scale = glm::scale(mat4(1.0f), catmullRom(timeStep - i, keyFrames[i].l_scale, keyFrames[i + 1].l_scale, keyFrames[i + 2].l_scale, keyFrames[i + 3].l_scale));
+			mat4 light_translation = glm::translate(mat4(1.0f), catmullRom(timeStep - i, keyFrames[i].l_translate, keyFrames[i + 1].l_translate, keyFrames[i + 2].l_translate, keyFrames[i + 3].l_translate));
+
+			//mat4 light_rotation = glm::mat4_cast(catmullRom(timeStep - i, glm::quat_cast(keyFrames[i].l_rotate), glm::quat_cast(keyFrames[i + 1].l_rotate), glm::quat_cast(keyFrames[i + 2].l_rotate), glm::quat_cast(keyFrames[i + 3].l_rotate)));
+			mat4 light_rotation = glm::mat4_cast(glm::slerp(glm::quat_cast(keyFrames[i + 1].l_rotate), glm::quat_cast(keyFrames[i + 2].c_rotate), timeStep - i));
+
+			mat4 newlightMatrix = light_scale * light_rotation * light_translation;
+			viewer()->setLightTransform(newlightMatrix);
+		}
+	}
+
+
 
 
 	shaderProgramModelBase->setUniform("modelViewProjectionMatrix", modelViewProjectionMatrix);
@@ -244,6 +307,7 @@ void ModelRenderer::display()
 		shaderProgramModelBase->setUniform("worldLightPosition", vec3(worldLightPosition));
 	}
 	
+	vec3 centerModel = (viewer()->scene()->model()->maximumBounds() + viewer()->scene()->model()->minimumBounds()) * 0.5f;
 
 	
 	shaderProgramModelBase->use();
@@ -282,6 +346,29 @@ void ModelRenderer::display()
 			shaderProgramModelBase->setUniform("normalTexBool", normalTexture);
 			shaderProgramModelBase->setUniform("tangentTexBool", tangentTexture);
 
+			
+			
+			mat4 trans;
+			mat4 rot;
+
+			// explosion based on camera positon
+			// used log a better effect
+			float c_explode = 0.0f;
+			if(cameraExplosion){
+				c_explode = -log(distance(normalize(vec3(worldCameraPosition.x, worldCameraPosition.y, worldCameraPosition.z)), normalize(groups.at(i).centerMass)));
+				if(c_explode > distance(normalize(vec3(worldCameraPosition.x, worldCameraPosition.y, worldCameraPosition.z)), normalize(groups.at(i).centerMass)) * 3){
+					c_explode = c_explode*5;
+				}
+			} 
+
+			// Get Direction from center of mass
+			vec3 dir = (groups.at(i).centerMass - centerModel);
+			trans = translate(mat4(1.0f), dir * vec3(c_explode+explosion));
+			
+
+			shaderProgramModelBase->setUniform("explosion", explosion);
+			shaderProgramModelBase->setUniform("transformation", trans);
+			shaderProgramModelBase->setUniform("rotation", rot);
 
 
 			glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
@@ -337,8 +424,8 @@ void ModelRenderer::display()
 
 		}
 	}
-
-
+	
+	
 	shaderProgramModelBase->release();
 
 	viewer()->scene()->model()->vertexArray().unbind();
@@ -380,5 +467,32 @@ void ModelRenderer::display()
 	// currentState->apply();
 
 }
+
+
+
+vec3 minity::ModelRenderer::catmullRom(float t, vec3 p0, vec3 p1, vec3 p2, vec3 p3) {
+	float t2 = pow(t, 2);
+	float t3 = pow(t, 3);
+	return (
+		(2.0f * p1) + 
+		(-p0  + p2) * t + 
+		(2.0f * p0 - 5.0f * p1 + 4.0f * p2 - p3) * t2 +
+		(-p0 + 3.0f * p1 - 3.0f*p2 + p3) * t3
+		) * 0.5f;
+}
+
+quat minity::ModelRenderer::catmullRom(float t, quat p0, quat p1, quat p2, quat p3) {
+	float t2 = pow(t, 2);
+	float t3 = pow(t, 3);
+	return (
+		(2.0f * p1) +
+		(-p0 + p2) * t +
+		(2.0f * p0 - 5.0f * p1 + 4.0f * p2 - p3) * t2 +
+		(-p0 + 3.0f * p1 - 3.0f * p2 + p3) * t3
+		) * 0.5f;
+}
+
+
+
 
 
