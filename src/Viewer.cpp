@@ -263,7 +263,7 @@ void Viewer::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 			}
 		}
 
-		if (key == GLFW_KEY_MINUS && action == GLFW_RELEASE) {
+		if ((key == GLFW_KEY_MINUS || key == GLFW_KEY_A) && action == GLFW_RELEASE) {
 			globjects::debug() << "Added Key frame";
 			// Intitialize a new keyFrame;
 			KeyFrame frame;
@@ -272,7 +272,7 @@ void Viewer::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 			frame.backgroundColor = viewer->backgroundColor();
 
 			// Explotion
-			frame.explotion = viewer->m_explotion;
+			frame.explosion = viewer->m_explosion;
 
 			// Decompose Camera
 			matrixDecompose(viewer->viewTransform(), frame.c_translate, frame.c_rotate, frame.c_scale, true);
@@ -284,7 +284,7 @@ void Viewer::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 			viewer->addFrame(frame);
 		}
 
-		if (key == GLFW_KEY_SLASH && action == GLFW_RELEASE) {
+		if ((key == GLFW_KEY_SLASH || key == GLFW_KEY_M) && action == GLFW_RELEASE) {
 			globjects::debug() << "Removed Key frame: ";
 			viewer->removeFrame();
 		}

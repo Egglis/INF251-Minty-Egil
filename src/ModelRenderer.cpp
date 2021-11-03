@@ -125,10 +125,10 @@ void ModelRenderer::display()
 	static bool ambientReflection = false;
 
 	// Animation
-	static float explotion = 0.0f;
+	static float explosion = 0.0f;
 	static float timeStep = 0.0f;
 	static float dt = 0.1;
-	static bool cameraExplotion = false;
+	static bool cameraExplosion = false;
 
 	unsigned int skyboxTexture = viewer()->scene()->skyboxTexture;
 
@@ -218,8 +218,8 @@ void ModelRenderer::display()
 	}
 
 	if(ImGui::BeginMenu("Animations")) {
-		ImGui::SliderFloat("Explotion:", &explotion, -1.0f, 5.0f);
-		ImGui::Checkbox("Camera Explotion", &cameraExplotion);
+		ImGui::SliderFloat("Explosion:", &explosion, -1.0f, 5.0f);
+		ImGui::Checkbox("Camera explosion", &cameraExplosion);
 		ImGui::SliderFloat("Timeline", &timeStep, 0.0f, viewer()->getKeyFrames().size()-3);
 		ImGui::SliderFloat("Animation speed: dt", &dt, 0.0000f, 1.0f);
 		if(viewer()->isAnimationOn()){
@@ -231,11 +231,10 @@ void ModelRenderer::display()
 	}
 
 
-
 	vec4 worldCameraPosition = inverseModelViewMatrix * vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	vec4 worldLightPosition = inverseModelLightMatrix * vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-	viewer()->m_explotion = vec3(explotion);
+	viewer()->m_explosion = vec3(explosion);
 
 	// Get the keyFrames from the viewer
 	std::vector<KeyFrame> keyFrames = viewer()->getKeyFrames();
@@ -253,8 +252,8 @@ void ModelRenderer::display()
 			// Background
 			viewer()->setBackgroundColor(catmullRom(timeStep - i, keyFrames[i].backgroundColor, keyFrames[i + 1].backgroundColor, keyFrames[i + 2].backgroundColor, keyFrames[i + 3].backgroundColor));
 
-			// Explotion
-			explotion = catmullRom(timeStep - i, keyFrames[i].explotion, keyFrames[i + 1].explotion, keyFrames[i + 2].explotion, keyFrames[i + 3].explotion).x;
+			// explosion
+			explosion = catmullRom(timeStep - i, keyFrames[i].explosion, keyFrames[i + 1].explosion, keyFrames[i + 2].explosion, keyFrames[i + 3].explosion).x;
 			
 			// ViewMatrix interoplation
 			mat4 view_scale = glm::scale(mat4(1.0f), catmullRom(timeStep - i, keyFrames[i].c_scale, keyFrames[i + 1].c_scale, keyFrames[i + 2].c_scale, keyFrames[i + 3].c_scale));
@@ -352,22 +351,22 @@ void ModelRenderer::display()
 			mat4 trans;
 			mat4 rot;
 
-			// Explotion based on camera positon
-			// Log is used for a cooler effect!
+			// explosion based on camera positon
+			// used log a better effect
 			float c_explode = 0.0f;
-			if(cameraExplotion){
+			if(cameraExplosion){
 				c_explode = -log(distance(normalize(vec3(worldCameraPosition.x, worldCameraPosition.y, worldCameraPosition.z)), normalize(groups.at(i).centerMass)));
-				if(c_explode < 0){
-					c_explode = 0.0f;
+				if(c_explode > distance(normalize(vec3(worldCameraPosition.x, worldCameraPosition.y, worldCameraPosition.z)), normalize(groups.at(i).centerMass)) * 3){
+					c_explode = c_explode*5;
 				}
 			} 
 
 			// Get Direction from center of mass
 			vec3 dir = (groups.at(i).centerMass - centerModel);
-			trans = translate(mat4(1.0f), dir * vec3(c_explode+explotion));
+			trans = translate(mat4(1.0f), dir * vec3(c_explode+explosion));
 			
 
-			shaderProgramModelBase->setUniform("explotion", explotion);
+			shaderProgramModelBase->setUniform("explosion", explosion);
 			shaderProgramModelBase->setUniform("transformation", trans);
 			shaderProgramModelBase->setUniform("rotation", rot);
 

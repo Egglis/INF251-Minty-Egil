@@ -16,7 +16,7 @@ namespace minity
 {
 	struct KeyFrame {
 		glm::vec3 backgroundColor;
-		// glm::vec3 camera_Rotation;
+
 		glm::mat4 c_rotate;
 		glm::vec3 c_translate;
 		glm::vec3 c_scale;
@@ -25,7 +25,7 @@ namespace minity
 		glm::vec3 l_translate;
 		glm::vec3 l_scale;
 
-		glm::vec3 explotion;
+		glm::vec3 explosion;
 	};
 
 	class Viewer
@@ -67,7 +67,7 @@ namespace minity
 
 		void saveImage(const std::string & filename);
 
-		glm::vec3 m_explotion;
+		glm::vec3 m_explosion;
 
 
 	private:
