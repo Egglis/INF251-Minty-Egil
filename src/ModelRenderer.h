@@ -1,5 +1,6 @@
 #pragma once
 #include "Renderer.h"
+#include "Viewer.h"
 #include <memory>
 
 #include <glm/glm.hpp>
@@ -29,7 +30,8 @@ namespace minity
 	public:
 		ModelRenderer(Viewer *viewer);
 		virtual void display();
-
+		glm::vec3 catmullRom(float t, glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3);
+		glm::quat catmullRom(float t, glm::quat p0, glm::quat p1, glm::quat p2, glm::quat p3);
 	private:
 		std::unique_ptr<globjects::VertexArray> m_lightArray = std::make_unique<globjects::VertexArray>();
 		std::unique_ptr<globjects::Buffer> m_lightVertices = std::make_unique<globjects::Buffer>();

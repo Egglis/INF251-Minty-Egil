@@ -14,6 +14,20 @@
 
 namespace minity
 {
+	struct KeyFrame {
+		glm::vec3 backgroundColor;
+		// glm::vec3 camera_Rotation;
+		glm::mat4 c_rotate;
+		glm::vec3 c_translate;
+		glm::vec3 c_scale;
+
+		glm::mat4 l_rotate;
+		glm::vec3 l_translate;
+		glm::vec3 l_scale;
+
+		glm::vec3 explotion;
+	};
+
 	class Viewer
 	{
 	public:
@@ -45,7 +59,16 @@ namespace minity
 		glm::mat4 modelLightTransform() const;
 		glm::mat4 modelLightProjectionTransform() const;
 
+		std::vector<KeyFrame> getKeyFrames();
+		bool isAnimationOn();
+		void addFrame(KeyFrame frame);
+		void removeFrame();
+
+
 		void saveImage(const std::string & filename);
+
+		glm::vec3 m_explotion;
+
 
 	private:
 
@@ -66,12 +89,17 @@ namespace minity
 		std::vector<std::unique_ptr<Interactor>> m_interactors;
 		std::vector<std::unique_ptr<Renderer>> m_renderers;
 
+		int currentFrame = 0;
+
 		glm::vec3 m_backgroundColor = glm::vec3(0.0f, 0.0f, 0.0f);
 		glm::mat4 m_modelTransform = glm::mat4(1.0f);
 		glm::mat4 m_viewTransform = glm::mat4(1.0f);
 		glm::mat4 m_projectionTransform = glm::mat4(1.0f);
 		glm::mat4 m_lightTransform = glm::mat4(1.0f);
 		glm::vec4 m_viewLightPosition = glm::vec4(0.0f, 0.0f,-sqrt(3.0f),1.0f);
+
+		std::vector<KeyFrame> m_keyFrames = std::vector<KeyFrame>();
+		bool m_playAnimation = false;
 
 		bool m_showUi = true;
 		bool m_saveScreenshot = false;

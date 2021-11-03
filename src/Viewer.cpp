@@ -26,6 +26,7 @@
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
+#include <glm/gtc/type_ptr.hpp>
 
 
 using namespace minity;
@@ -188,6 +189,8 @@ mat4 Viewer::modelLightProjectionTransform() const
 	return projectionTransform()*modelLightTransform();
 }
 
+
+
 void Viewer::saveImage(const std::string & filename)
 {
 	uvec2 size = viewportSize();
@@ -260,6 +263,41 @@ void Viewer::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 			}
 		}
 
+		if (key == GLFW_KEY_MINUS && action == GLFW_RELEASE) {
+			globjects::debug() << "Added Key frame";
+			// Intitialize a new keyFrame;
+			KeyFrame frame;
+
+			// Background Color
+			frame.backgroundColor = viewer->backgroundColor();
+
+			// Explotion
+			frame.explotion = viewer->m_explotion;
+
+			// Decompose Camera
+			matrixDecompose(viewer->viewTransform(), frame.c_translate, frame.c_rotate, frame.c_scale, true);
+
+			// Decompose Light
+			matrixDecompose(viewer->lightTransform(), frame.l_translate, frame.l_rotate, frame.l_scale, true);
+
+			// Add frame
+			viewer->addFrame(frame);
+		}
+
+		if (key == GLFW_KEY_SLASH && action == GLFW_RELEASE) {
+			globjects::debug() << "Removed Key frame: ";
+			viewer->removeFrame();
+		}
+
+		if (key == GLFW_KEY_P && action == GLFW_RELEASE) {
+			if (viewer->m_keyFrames.size() >= 4){
+				globjects::debug() << "Playing Animation...";
+				viewer->m_playAnimation = !viewer->m_playAnimation;
+			} else {
+				globjects::debug() << "Need to have atleast 4 key frames to play animation";
+			}
+		}
+
 
 		for (auto& i : viewer->m_interactors)
 		{
@@ -267,6 +305,48 @@ void Viewer::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 		}
 	}
 }
+
+std::vector<KeyFrame> minity::Viewer::getKeyFrames()
+{
+	return m_keyFrames;
+}
+
+bool minity::Viewer::isAnimationOn()
+{
+	return m_playAnimation;
+}
+
+void minity::Viewer::addFrame(KeyFrame frame) {
+	// If added frame is the 1st or the 3rd add a duplicate 
+	// else if Added frams is the 4th remove latest duplicated frame and add a new duplicate pair!
+	// else add a single frame!
+	if(m_keyFrames.size() == 0 || m_keyFrames.size() == 4){
+		m_keyFrames.push_back(frame);
+		m_keyFrames.push_back(frame);
+	} else if (m_keyFrames.size() > 4) {
+		m_keyFrames.erase(m_keyFrames.end()-1);
+		m_keyFrames.push_back(frame);
+		m_keyFrames.push_back(frame);
+	} else {
+		m_keyFrames.push_back(frame);
+	}
+}
+
+void minity::Viewer::removeFrame() {
+	// If list of frames are bigger than 6 (4 unique frames) remove the duplicates and duplicate the new last element
+	// else remove keyFrame
+	if(m_keyFrames.size() >= 6){
+		m_keyFrames.erase(m_keyFrames.end()-1);
+		m_keyFrames.erase(m_keyFrames.end()-1);
+		m_keyFrames.push_back(m_keyFrames[m_keyFrames.size() - 1]);
+	} else if(m_keyFrames.size() > 0) {
+		m_keyFrames.erase(m_keyFrames.end()-1);
+	} else {
+		globjects::debug() << "All key frames are removed";
+	}
+}
+
+
 
 void Viewer::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
@@ -454,6 +534,7 @@ void Viewer::mainMenu()
 		ImGui::EndMenu();
 	}
 }
+
 
 namespace minity
 {
